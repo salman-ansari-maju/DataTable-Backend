@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 app.use(cors())
+app.use(express.json())
 const connectToCluster = require('./database/mongodb')
 
 app.get('/job', async (req, res) => {
@@ -9,6 +10,7 @@ app.get('/job', async (req, res) => {
         let mongoClient = await connectToCluster()
         let db = mongoClient.db('jobs-db')
         let collection = db.collection('job-scores')
+
         const data = await collection.find({}).toArray()
 
         // Create an array of objects with unique job_ids using reduce
@@ -57,18 +59,19 @@ app.get('/score', async (req, res) => {
         // Modify the jobIdsArray to add the 'title' property
 
         res.json(data)
-        console.log(data)
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch jobs' })
     }
 })
-app.post('/api/postdata', (req, res) => {
-    const data = req.body // Assuming the client sends JSON data in the request body
-    console.log('Received data:', data)
+app.post('/api/postdata', async (req, res) => {
+    // console.log('Received data:', req.body)
 
+    let mongoClient = await connectToCluster()
+    let db = mongoClient.db('jobs-db')
+    let collection = db.collection('job-scores')
+    const data = await collection.insertMany(req.body)
     // You can process the data or store it in the database here
     // ...
-
     res.status(200).json({ message: 'Data received successfully' })
 })
 
